@@ -22,9 +22,11 @@ inline void QuoteUpdateSystem(entt::registry& registry)
     // но у которых есть Side, Price (и, возможно, Quantity).
     auto view = registry.view<Price>(entt::exclude<OrderTag, TradeTag>);
 
-    for (auto entity : view) {
+    for (auto entity : view)
+    {
         auto &price = view.get<Price>(entity);
-        if (price.value < 0.0) {
+        if (price.value < 0.0)
+        {
             std::cout << "[QuoteUpdateSystem] Removing quote with negative price: "
                       << price.value << "\n";
             registry.destroy(entity);
@@ -37,7 +39,7 @@ inline void QuoteUpdateSystem(entt::registry& registry)
 inline void OrderBookSystem(entt::registry& registry)
 {
     // Собираем все котировки (Side, Price, Quantity), исключая TradeTag
-    auto view = registry.view<Side, Price, Quantity>(entt::exclude<TradeTag>);
+    auto view = registry.view<Side, Price, Quantity>(entt::exclude<TradeTag, FilledTag>);
 
     // 1. Сбор всех котировок в вектор
     std::vector<std::tuple<SideT, double, int>> allQuotes;
@@ -228,12 +230,14 @@ inline void MatchingSystem(entt::registry& registry)
                 // Если объём 0 => ставим FilledTag
                 if (b.volume <= 0)
                 {
+                    registry.remove<OrderTag>(b.entity);
                     registry.emplace<FilledTag>(b.entity);
                     registry.remove<ActiveTag>(b.entity);
                     std::cout << "   => Order(" << int(b.entity) << ") filled!\n";
                 }
                 if (s.volume <= 0)
                 {
+                    registry.remove<OrderTag>(s.entity);
                     registry.emplace<FilledTag>(s.entity);
                     registry.remove<ActiveTag>(s.entity);
                     std::cout << "   => Order(" << int(s.entity) << ") filled!\n";
@@ -303,7 +307,7 @@ inline void CheckLimitsSystem(entt::registry& registry)
 
             // Чтобы не вычитать снова на каждом тике, снимем RetiredTradeTag
             // (или можно хранить флаг, что уже учли).
-            registry.remove<RetiredTradeTag>(entity);
+            registry.destroy(entity);
         }
     }
 }

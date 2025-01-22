@@ -12,7 +12,8 @@
 //=====================================================//
 
 // Пример создания «Order»
-entt::entity CreateOrder(entt::registry& reg, int id, double price, int vol, SideT side) {
+entt::entity CreateOrder(entt::registry& reg, int id, double price, int vol, SideT side)
+{
     auto e = reg.create();
     reg.emplace<ID>(e, id);
     reg.emplace<Side>(e, side);
