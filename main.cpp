@@ -118,9 +118,47 @@ void CreateSampleQuotes(entt::registry& registry)
 //  4. main: ИНИЦИАЛИЗАЦИЯ, ЗАПУСК "СИСТЕМ"
 //=====================================================//
 
+char * rspace(char * s)
+{
+    char * from = s, *to = s;
+    do {
+        if (*from != ' ') *to++ = *from;
+    } while(*++from);
+    *to = 0;
+    return s;
+}
+
+void CommandInput()
+{
+    std::cout << "\nimput your command: continue/c or limit" << std::endl;
+
+    std::string input;
+    while (true)
+    {
+        getline(std::cin, input);
+        input = rspace(input.data());
+
+        if (input == "continue"
+            || input == "c")
+        {
+            return;
+        }
+        else if (input == "limit")
+        {
+            int lim;
+            std::cin >> lim;
+            int oldLim = gVolumeLimit;
+            gVolumeLimit = lim;
+            std::cout << "change limit from " << oldLim << " to " << gVolumeLimit << std::endl;
+        }
+    }
+}
+
 int main()
 {
     entt::registry registry;
+
+    CommandInput();
 
     // Пример: создаём несколько ордеров
     // - Buy(1, price=100, vol=10)
@@ -152,6 +190,8 @@ int main()
         MatchingSystem(registry);
     }
 
+    CommandInput();
+
     CreateOrder(registry, 2, 99.0, 5, SideT::Buy);
     CreateOrder(registry, 4, 98.0, 10, SideT::Sell);
 
@@ -169,6 +209,8 @@ int main()
         MatchingSystem(registry);
     }
 
+    CommandInput();
+
     registry.emplace<RetiredTradeTag>(e);
 
     {
@@ -184,6 +226,30 @@ int main()
         // "Системы" для Order
         MatchingSystem(registry);
     }
+
+    CommandInput();
+
+    for (int j = 0; j < 1000; ++j)
+    {
+        CreateOrder(registry, j, 1000.0 - j * 0.1, 10 + (j % 10), SideT::Buy);
+        CreateOrder(registry, 1000 + j, 99.0 + j * 0.1, 15 + (j % 5), SideT::Sell);
+    }
+
+    {
+        std::cout << "\n--- TICK " << i++ << " ---\n";
+
+        // "Системы" для Quote
+        QuoteUpdateSystem(registry);
+        OrderBookSystem(registry);
+
+        // Система для проверки лимитов
+        CheckLimitsSystem(registry);
+
+        // "Системы" для Order
+        MatchingSystem(registry);
+    }
+
+    std::cout << "\n--- End symulation ";
 
     return 0;
 }
